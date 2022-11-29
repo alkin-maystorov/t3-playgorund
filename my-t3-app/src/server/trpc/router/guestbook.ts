@@ -1,7 +1,22 @@
 import { z } from "zod";
-import { router, protectedProcedure } from "../trpc";
+import { router, protectedProcedure, publicProcedure } from "../trpc";
 
 export const guestbookRouter = router({
+  getAll: publicProcedure.query(async ({ ctx }) => {
+    try {
+      return await ctx.prisma.guestbook.findMany({
+        select: {
+          name: true,
+          message: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }),
   postMessage: protectedProcedure
     .input(
       z.object({
