@@ -1,16 +1,24 @@
 import { z } from "zod";
-
 import { router, publicProcedure } from "../trpc";
 
-export const exampleRouter = router({
-  hello: publicProcedure
-    .input(z.object({ text: z.string().nullish() }).nullish())
-    .query(({ input }) => {
-      return {
-        greeting: `Hello ${input?.text ?? "world"}`,
-      };
+export const guestbookRouter = router({
+  postMessage: publicProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        message: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await ctx.prisma.guestbook.create({
+          data: {
+            name: input.name,
+            message: input.message,
+          },
+        });
+      } catch (error) {
+        console.log(error);
+      }
     }),
-  getAll: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.example.findMany();
-  }),
 });
