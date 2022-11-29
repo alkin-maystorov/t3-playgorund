@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { router, publicProcedure } from "../trpc";
+import { router, protectedProcedure } from "../trpc";
 
 export const guestbookRouter = router({
-  postMessage: publicProcedure
+  postMessage: protectedProcedure
     .input(
       z.object({
         name: z.string(),
