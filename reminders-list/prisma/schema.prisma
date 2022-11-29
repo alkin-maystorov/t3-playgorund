@@ -16,11 +16,12 @@ datasource db {
   referentialIntegrity = "prisma"
 }
 
-model Example {
+model Reminder {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  checked   Boolean
+  text      String
+  checked   Boolean  @default(false)
 }
 
 // Necessary for Next auth
