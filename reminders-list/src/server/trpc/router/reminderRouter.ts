@@ -7,6 +7,7 @@ export const reminderRouter = router({
     try {
       return ctx.prisma.reminder.findMany({
         select: {
+          id: true,
           text: true,
           checked: true,
         },
@@ -19,11 +20,24 @@ export const reminderRouter = router({
     }
   }),
   createReminder: protectedProcedure
-    .input(z.object({ text: z.string() }))
+    .input(z.object({ text: z.string().min(3) }))
     .mutation(async ({ ctx, input }) => {
       try {
         await ctx.prisma.reminder.create({
           data: { text: input.text, checked: false },
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    }),
+  deleteReminder: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await ctx.prisma.reminder.delete({
+          where: {
+            id: input.id,
+          },
         });
       } catch (error) {
         console.log(error);

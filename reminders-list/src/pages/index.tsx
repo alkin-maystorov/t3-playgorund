@@ -4,9 +4,47 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { trpc } from "../utils/trpc";
 import React, { useState } from "react";
 
+const Input: React.FC = () => {
+  const [reminder, setReminder] = useState("");
+
+  const newReminder = trpc.reminder.createReminder.useMutation();
+
+  return (
+    <form
+      className="flex gap-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        newReminder.mutate({ text: reminder });
+        setReminder("");
+      }}
+    >
+      <input
+        type="text"
+        value={reminder}
+        placeholder="Your reminder..."
+        minLength={2}
+        maxLength={100}
+        onChange={(event) => setReminder(event.target.value)}
+        className="rounded-md border-2 border-violet-600 bg-neutral-900 px-4 py-2 focus:outline-none"
+      />
+
+      <button
+        className="rounded-md border-2 border-violet-600 bg-neutral-900 px-4 py-2 hover:bg-violet-600"
+        disabled={newReminder.isLoading}
+      >
+        + Add Reminder
+      </button>
+
+      {newReminder.error?.message}
+    </form>
+  );
+};
+
 const Reminders: React.FC = () => {
   const { data: reminders, isLoading } = trpc.reminder.getAll.useQuery();
   const [isDone, setIsDone] = useState(false);
+
+  const deleteReminder = trpc.reminder.deleteReminder.useMutation();
 
   if (isLoading) return <div>Fetching reminders...</div>;
 
@@ -16,11 +54,18 @@ const Reminders: React.FC = () => {
         return (
           <div key={index} className="p-4">
             <p
-              className={`cursor-pointer text-xl ${
-                reminder.checked && "line-through"
+              className={`flex cursor-pointer items-center justify-between ${
+                isDone && "line-through"
               }`}
             >
-              <i onClick={() => (reminder.checked = true)}>{reminder.text}</i>
+              <i onClick={() => setIsDone(!isDone)}>{reminder.text}</i>
+              <button
+                className="rounded-md  border border-red-500 bg-neutral-900 px-4 py-2 hover:bg-red-500"
+                disabled={deleteReminder.isLoading}
+                onClick={() => deleteReminder.mutate({ id: reminder.id })}
+              >
+                Delete
+              </button>
             </p>
           </div>
         );
@@ -44,20 +89,19 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="flex min-h-screen flex-col p-12">
+      <main className="ml-auto mr-auto flex min-h-screen max-w-7xl flex-col p-12">
         <section className="flex w-full items-center justify-between">
-          <h1 className="rounded-md border border-violet-600 p-3 text-2xl">
+          <h1 className="cursor-default rounded-md border-2 border-violet-600 bg-neutral-900 px-4 py-2">
             {session && session.user?.name + "'s"} Reminder List
           </h1>
 
           <div className="flex gap-4">
             {session ? (
               <>
-                <button className="rounded-md bg-violet-600 p-3 text-2xl transition-colors hover:bg-violet-500">
-                  + Add Reminder
-                </button>
+                <Input />
+
                 <button
-                  className="rounded-md bg-violet-600 p-3 text-2xl transition-colors hover:bg-violet-500"
+                  className="rounded-md border-2 border-violet-600 bg-neutral-900 px-4 py-2 hover:bg-violet-600"
                   onClick={() => signOut()}
                 >
                   Logout
@@ -65,7 +109,7 @@ const Home: NextPage = () => {
               </>
             ) : (
               <button
-                className="rounded-md bg-violet-600 p-3 text-2xl transition-colors hover:bg-violet-500"
+                className="rounded-md border-2 border-violet-600 bg-neutral-900 px-4 py-2 hover:bg-violet-600"
                 onClick={() => signIn("discord")}
               >
                 Login with Discord
@@ -74,7 +118,7 @@ const Home: NextPage = () => {
           </div>
         </section>
         {session && (
-          <div className="mt-5 rounded-md border border-violet-600">
+          <div className="mt-5 rounded-md border-2 border-violet-600 bg-neutral-900 px-4 py-2">
             <Reminders />
           </div>
         )}
